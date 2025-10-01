@@ -9,7 +9,7 @@
 
 An AI-powered recommendation system for WordPress content, designed specifically for entrepreneurs and business professionals. Built with FastAPI, featuring real-time WordPress integration, intelligent caching, and a modern web interface.
 
-![Visey Recommender Dashboard](https://via.placeholder.com/800x400/2563eb/ffffff?text=Visey+Recommender+Dashboard)
+![Visey Recommender Dashboard - 
 
 ## ✨ Features
 
