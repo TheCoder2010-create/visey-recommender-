@@ -1,0 +1,217 @@
+# Docker Compose for Visey Recommender with Load Balancer
+version: '3.8'
+
+services:
+  # Nginx Load Balancer
+  nginx-lb:
+    build:
+      context: ./nginx
+      dockerfile: Dockerfile
+    ports:
+      - "80:80"
+      - "443:443"
+      - "8080:8080"  # Status page
+    volumes:
+      - ./nginx/ssl:/etc/ssl:ro
+      - ./nginx/logs:/var/log/nginx
+      - nginx-cache:/var/cache/nginx
+    depends_on:
+      - visey-app-1
+      - visey-app-2
+      - visey-app-3
+    networks:
+      - visey-network
+    restart: unless-stopped
+    deploy:
+      resources:
+        limits:
+          memory: 512M
+          cpus: '0.5'
+
+  # HAProxy Load Balancer (alternative)
+  haproxy-lb:
+    build:
+      context: ./haproxy
+      dockerfile: Dockerfile
+    ports:
+      - "8081:80"    # Alternative HTTP port
+      - "8443:443"   # Alternative HTTPS port
+      - "8404:8404"  # Stats page
+      - "8405:8405"  # Health check
+    volumes:
+      - ./haproxy/ssl:/etc/ssl/certs:ro
+      - ./haproxy/logs:/var/log/haproxy
+    depends_on:
+      - visey-app-1
+      - visey-app-2
+      - visey-app-3
+    networks:
+      - visey-network
+    restart: unless-stopped
+    deploy:
+      resources:
+        limits:
+          memory: 256M
+          cpus: '0.25'
+
+  # Visey Recommender App Instances
+  visey-app-1:
+    build:
+      context: ../
+      dockerfile: Dockerfile
+    environment:
+      - WP_BASE_URL=${WP_BASE_URL}
+      - WP_AUTH_TYPE=${WP_AUTH_TYPE}
+      - WP_USERNAME=${WP_USERNAME}
+      - WP_PASSWORD=${WP_PASSWORD}
+      - REDIS_URL=redis://redis:6379
+      - INSTANCE_ID=app-1
+      - PORT=8000
+    volumes:
+      - app-data-1:/app/data
+    networks:
+      - visey-network
+    restart: unless-stopped
+    deploy:
+      resources:
+        limits:
+          memory: 1G
+          cpus: '1.0'
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health/live"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+  visey-app-2:
+    build:
+      context: ../
+      dockerfile: Dockerfile
+    environment:
+      - WP_BASE_URL=${WP_BASE_URL}
+      - WP_AUTH_TYPE=${WP_AUTH_TYPE}
+      - WP_USERNAME=${WP_USERNAME}
+      - WP_PASSWORD=${WP_PASSWORD}
+      - REDIS_URL=redis://redis:6379
+      - INSTANCE_ID=app-2
+      - PORT=8000
+    volumes:
+      - app-data-2:/app/data
+    networks:
+      - visey-network
+    restart: unless-stopped
+    deploy:
+      resources:
+        limits:
+          memory: 1G
+          cpus: '1.0'
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health/live"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+  visey-app-3:
+    build:
+      context: ../
+      dockerfile: Dockerfile
+    environment:
+      - WP_BASE_URL=${WP_BASE_URL}
+      - WP_AUTH_TYPE=${WP_AUTH_TYPE}
+      - WP_USERNAME=${WP_USERNAME}
+      - WP_PASSWORD=${WP_PASSWORD}
+      - REDIS_URL=redis://redis:6379
+      - INSTANCE_ID=app-3
+      - PORT=8000
+    volumes:
+      - app-data-3:/app/data
+    networks:
+      - visey-network
+    restart: unless-stopped
+    deploy:
+      resources:
+        limits:
+          memory: 1G
+          cpus: '1.0'
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health/live"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+  # Redis for shared caching
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis-data:/data
+      - ./redis/redis.conf:/usr/local/etc/redis/redis.conf:ro
+    command: redis-server /usr/local/etc/redis/redis.conf
+    networks:
+      - visey-network
+    restart: unless-stopped
+    deploy:
+      resources:
+        limits:
+          memory: 512M
+          cpus: '0.5'
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 30s
+      timeout: 3s
+      retries: 3
+
+  # Prometheus for monitoring
+  prometheus:
+    image: prom/prometheus:latest
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./monitoring/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - prometheus-data:/prometheus
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.path=/prometheus'
+      - '--web.console.libraries=/etc/prometheus/console_libraries'
+      - '--web.console.templates=/etc/prometheus/consoles'
+      - '--storage.tsdb.retention.time=200h'
+      - '--web.enable-lifecycle'
+    networks:
+      - visey-network
+    restart: unless-stopped
+
+  # Grafana for visualization
+  grafana:
+    image: grafana/grafana:latest
+    ports:
+      - "3000:3000"
+    volumes:
+      - grafana-data:/var/lib/grafana
+      - ./monitoring/grafana/dashboards:/etc/grafana/provisioning/dashboards:ro
+      - ./monitoring/grafana/datasources:/etc/grafana/provisioning/datasources:ro
+    environment:
+      - GF_SECURITY_ADMIN_PASSWORD=admin123
+      - GF_USERS_ALLOW_SIGN_UP=false
+    networks:
+      - visey-network
+    restart: unless-stopped
+
+volumes:
+  nginx-cache:
+  app-data-1:
+  app-data-2:
+  app-data-3:
+  redis-data:
+  prometheus-data:
+  grafana-data:
+
+networks:
+  visey-network:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 172.20.0.0/16

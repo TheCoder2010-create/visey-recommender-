@@ -1,0 +1,56 @@
+# Prometheus configuration for Visey Recommender monitoring
+global:
+  scrape_interval: 15s
+  evaluation_interval: 15s
+
+rule_files:
+  - "alert_rules.yml"
+
+alerting:
+  alertmanagers:
+    - static_configs:
+        - targets:
+          - alertmanager:9093
+
+scrape_configs:
+  # Visey Recommender instances
+  - job_name: 'visey-recommender'
+    static_configs:
+      - targets: 
+        - 'visey-app-1:8000'
+        - 'visey-app-2:8000'
+        - 'visey-app-3:8000'
+    metrics_path: '/metrics'
+    scrape_interval: 30s
+    scrape_timeout: 10s
+
+  # Nginx load balancer
+  - job_name: 'nginx'
+    static_configs:
+      - targets: ['nginx-lb:8080']
+    metrics_path: '/nginx_status'
+    scrape_interval: 30s
+
+  # HAProxy load balancer
+  - job_name: 'haproxy'
+    static_configs:
+      - targets: ['haproxy-lb:8404']
+    metrics_path: '/stats;csv'
+    scrape_interval: 30s
+
+  # Redis
+  - job_name: 'redis'
+    static_configs:
+      - targets: ['redis:6379']
+    scrape_interval: 30s
+
+  # Node exporter for system metrics
+  - job_name: 'node'
+    static_configs:
+      - targets: ['node-exporter:9100']
+    scrape_interval: 30s
+
+  # Prometheus itself
+  - job_name: 'prometheus'
+    static_configs:
+      - targets: ['localhost:9090']

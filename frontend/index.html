@@ -1,0 +1,214 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Visey Recommender - Test Interface</title>
+    <link rel="stylesheet" href="styles.css">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+</head>
+<body>
+    <div class="container">
+        <!-- Header -->
+        <header class="header">
+            <div class="logo">
+                <i class="fas fa-brain"></i>
+                <h1>Visey Recommender</h1>
+            </div>
+            <div class="status-indicator">
+                <span id="api-status" class="status-dot offline"></span>
+                <span id="status-text">Checking...</span>
+            </div>
+        </header>
+
+        <!-- Main Content -->
+        <main class="main-content">
+            <!-- API Status Panel -->
+            <section class="panel status-panel">
+                <h2><i class="fas fa-heartbeat"></i> System Status</h2>
+                <div class="status-grid">
+                    <div class="status-item">
+                        <div class="status-label">API Health</div>
+                        <div id="api-health" class="status-value">-</div>
+                    </div>
+                    <div class="status-item">
+                        <div class="status-label">WordPress</div>
+                        <div id="wp-status" class="status-value">-</div>
+                    </div>
+                    <div class="status-item">
+                        <div class="status-label">Cache</div>
+                        <div id="cache-status" class="status-value">-</div>
+                    </div>
+                    <div class="status-item">
+                        <div class="status-label">Last Sync</div>
+                        <div id="last-sync" class="status-value">-</div>
+                    </div>
+                </div>
+                <button id="refresh-status" class="btn btn-secondary">
+                    <i class="fas fa-sync-alt"></i> Refresh Status
+                </button>
+            </section>
+
+            <!-- Recommendation Testing -->
+            <section class="panel recommendation-panel">
+                <h2><i class="fas fa-magic"></i> Test Recommendations</h2>
+                <form id="recommendation-form" class="form">
+                    <div class="form-group">
+                        <label for="user-id">User ID</label>
+                        <input type="number" id="user-id" placeholder="Enter WordPress user ID (e.g., 1)" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="top-n">Number of Recommendations</label>
+                        <select id="top-n">
+                            <option value="5">5 recommendations</option>
+                            <option value="10" selected>10 recommendations</option>
+                            <option value="15">15 recommendations</option>
+                            <option value="20">20 recommendations</option>
+                        </select>
+                    </div>
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fas fa-search"></i> Get Recommendations
+                    </button>
+                </form>
+
+                <div id="recommendation-results" class="results hidden">
+                    <h3>Recommendations</h3>
+                    <div id="recommendations-list"></div>
+                    <div class="results-meta">
+                        <span id="results-count"></span>
+                        <span id="response-time"></span>
+                    </div>
+                </div>
+            </section>
+
+            <!-- WordPress Data Explorer -->
+            <section class="panel data-panel">
+                <h2><i class="fas fa-database"></i> WordPress Data</h2>
+                
+                <!-- Search -->
+                <div class="search-section">
+                    <h3>Search Content</h3>
+                    <form id="search-form" class="form">
+                        <div class="form-group">
+                            <input type="text" id="search-query" placeholder="Search WordPress content..." required>
+                            <button type="submit" class="btn btn-primary">
+                                <i class="fas fa-search"></i> Search
+                            </button>
+                        </div>
+                    </form>
+                    <div id="search-results" class="results hidden"></div>
+                </div>
+
+                <!-- User Profile -->
+                <div class="profile-section">
+                    <h3>User Profile</h3>
+                    <form id="profile-form" class="form">
+                        <div class="form-group">
+                            <input type="number" id="profile-user-id" placeholder="User ID" required>
+                            <button type="submit" class="btn btn-primary">
+                                <i class="fas fa-user"></i> Get Profile
+                            </button>
+                        </div>
+                    </form>
+                    <div id="profile-results" class="results hidden"></div>
+                </div>
+
+                <!-- Data Stats -->
+                <div class="stats-section">
+                    <h3>Cached Data Statistics</h3>
+                    <div class="stats-grid">
+                        <div class="stat-item">
+                            <div class="stat-label">Posts</div>
+                            <div id="posts-count" class="stat-value">-</div>
+                        </div>
+                        <div class="stat-item">
+                            <div class="stat-label">Users</div>
+                            <div id="users-count" class="stat-value">-</div>
+                        </div>
+                        <div class="stat-item">
+                            <div class="stat-label">Categories</div>
+                            <div id="categories-count" class="stat-value">-</div>
+                        </div>
+                        <div class="stat-item">
+                            <div class="stat-label">Tags</div>
+                            <div id="tags-count" class="stat-value">-</div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- WordPress Management -->
+            <section class="panel management-panel">
+                <h2><i class="fas fa-cogs"></i> WordPress Management</h2>
+                
+                <div class="management-actions">
+                    <button id="sync-data" class="btn btn-primary">
+                        <i class="fas fa-sync"></i> Sync WordPress Data
+                    </button>
+                    <button id="check-wp-health" class="btn btn-secondary">
+                        <i class="fas fa-stethoscope"></i> Check WordPress Health
+                    </button>
+                </div>
+
+                <div id="sync-results" class="results hidden"></div>
+                <div id="wp-health-results" class="results hidden"></div>
+            </section>
+
+            <!-- Performance Testing -->
+            <section class="panel performance-panel">
+                <h2><i class="fas fa-tachometer-alt"></i> Performance Testing</h2>
+                
+                <div class="performance-controls">
+                    <div class="form-group">
+                        <label for="load-test-requests">Number of Requests</label>
+                        <select id="load-test-requests">
+                            <option value="10">10 requests</option>
+                            <option value="50" selected>50 requests</option>
+                            <option value="100">100 requests</option>
+                        </select>
+                    </div>
+                    <button id="run-load-test" class="btn btn-warning">
+                        <i class="fas fa-bolt"></i> Run Load Test
+                    </button>
+                </div>
+
+                <div id="performance-results" class="results hidden">
+                    <div class="performance-metrics">
+                        <div class="metric">
+                            <div class="metric-label">Average Response Time</div>
+                            <div id="avg-response-time" class="metric-value">-</div>
+                        </div>
+                        <div class="metric">
+                            <div class="metric-label">Success Rate</div>
+                            <div id="success-rate" class="metric-value">-</div>
+                        </div>
+                        <div class="metric">
+                            <div class="metric-label">Requests/Second</div>
+                            <div id="requests-per-second" class="metric-value">-</div>
+                        </div>
+                    </div>
+                    <canvas id="performance-chart" width="400" height="200"></canvas>
+                </div>
+            </section>
+        </main>
+
+        <!-- Footer -->
+        <footer class="footer">
+            <p>&copy; 2024 Visey Recommender System - Test Interface</p>
+        </footer>
+    </div>
+
+    <!-- Loading Overlay -->
+    <div id="loading-overlay" class="loading-overlay hidden">
+        <div class="spinner"></div>
+        <div class="loading-text">Processing...</div>
+    </div>
+
+    <!-- Toast Notifications -->
+    <div id="toast-container" class="toast-container"></div>
+
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="demo-data.js"></script>
+    <script src="script.js"></script>
+</body>
+</html>
